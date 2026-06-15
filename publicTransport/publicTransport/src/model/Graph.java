@@ -1,41 +1,50 @@
 package model;
+
 import java.util.*;
 
 public class Graph {
-    private Map<String, List<Edge>> adjList = new HashMap<>();
+    private Map<String, Node> nodes = new HashMap<>();      // key = id node
+    private Map<String, List<Edge>> adjList = new HashMap<>(); // key = id node asal
 
-    public void addNode(String nama) {
-        adjList.putIfAbsent(nama, new ArrayList<>());
+    public void addNode(Node node) {
+        nodes.putIfAbsent(node.getId(), node);
+        adjList.putIfAbsent(node.getId(), new ArrayList<>());
     }
 
-    public void addEdge(String dari, String ke, int waktu, int biaya) {
-        addNode(dari);
-        addNode(ke);
-        adjList.get(dari).add(new Edge(ke, waktu, biaya));
+    public void addEdge(String idEdge, String dariId, String tujuanId, int waktuMenit, int biayaRupiah, String jenisTransportasi) {
+        Node tujuanNode = nodes.get(tujuanId);
+        if (tujuanNode == null) {
+            throw new IllegalArgumentException("Node tujuan " + tujuanId + " belum ditambahkan");
+        }
+        adjList.get(dariId).add(new Edge(idEdge, tujuanNode, waktuMenit, biayaRupiah, jenisTransportasi));
     }
 
-    // dipakai untuk fitur "simulasikan rute tidak tersedia"
-    public void removeEdge(String dari, String ke) {
-        List<Edge> edges = adjList.get(dari);
+    // dipakai buat fitur "simulasikan rute tidak tersedia" (cara 1: hapus dari list)
+    public void removeEdge(String dariId, String tujuanId) {
+        List<Edge> edges = adjList.get(dariId);
         if (edges != null) {
-            edges.removeIf(e -> e.getTujuan().equals(ke));
+            edges.removeIf(e -> e.getTujuan().getId().equals(tujuanId));
         }
     }
 
-    public List<Edge> getNeighbors(String nama) {
-        return adjList.getOrDefault(nama, new ArrayList<>());
+    public List<Edge> getNeighbors(String nodeId) {
+        return adjList.getOrDefault(nodeId, new ArrayList<>());
     }
 
-    public boolean containsNode(String nama) {
-        return adjList.containsKey(nama);
+    public Node getNode(String id) {
+        return nodes.get(id);
     }
 
-    public Set<String> getAllNodes() {
-        return adjList.keySet();
+    public boolean containsNode(String id) {
+        return nodes.containsKey(id);
+    }
+
+    public Set<String> getAllNodeIds() {
+        return nodes.keySet();
     }
 
     public int jumlahNode() {
-        return adjList.size();
+        return nodes.size();
     }
 
     public int jumlahEdge() {

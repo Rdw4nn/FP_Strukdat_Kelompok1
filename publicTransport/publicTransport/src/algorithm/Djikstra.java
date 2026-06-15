@@ -1,85 +1,81 @@
-package model;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Set;
+package algorithm;
+import java.util.*;
+import model.Graph;
+import model.Edge;
 
 public class Djikstra {
     public static class HasilRute {
         public List<String> rute;
         public int totalBobot;
         public boolean ditemukan;
- 
+
         public HasilRute(List<String> rute, int totalBobot, boolean ditemukan) {
             this.rute = rute;
             this.totalBobot = totalBobot;
             this.ditemukan = ditemukan;
         }
     }
- 
+
     // mode: "waktu" atau "biaya"
-    public static HasilRute cari(Graph graph, String asal, String tujuan, String mode) {
-        if (!graph.containsNode(asal) || !graph.containsNode(tujuan)) {
+    public static HasilRute cari(Graph graph, String asalId, String tujuanId, String mode) {
+        if (!graph.containsNode(asalId) || !graph.containsNode(tujuanId)) {
             return new HasilRute(new ArrayList<>(), -1, false);
         }
- 
+
         Map<String, Integer> jarak = new HashMap<>();
         Map<String, String> sebelum = new HashMap<>();
         Set<String> visited = new HashSet<>();
- 
-        for (String node : graph.getAllNodes()) {
-            jarak.put(node, Integer.MAX_VALUE);
+
+        for (String id : graph.getAllNodeIds()) {
+            jarak.put(id, Integer.MAX_VALUE);
         }
-        jarak.put(asal, 0);
- 
+        jarak.put(asalId, 0);
+
         PriorityQueue<String> pq = new PriorityQueue<>(Comparator.comparingInt(jarak::get));
-        pq.add(asal);
- 
+        pq.add(asalId);
+
         while (!pq.isEmpty()) {
             String sekarang = pq.poll();
             if (visited.contains(sekarang)) continue;
             visited.add(sekarang);
- 
-            if (sekarang.equals(tujuan)) break;
- 
+
+            if (sekarang.equals(tujuanId)) break;
+
             for (Edge e : graph.getNeighbors(sekarang)) {
-                int bobot = mode.equals("biaya") ? e.getBiaya() : e.getWaktu();
+                if (!e.isAktif()) continue; // skip edge yang dimatikan (buat fitur simulasi)
+
+                int bobot = mode.equals("biaya") ? e.getBiayaRupiah() : e.getWaktuMenit();
+                String idTujuan = e.getTujuan().getId();
                 int jarakBaru = jarak.get(sekarang) + bobot;
- 
-                if (jarakBaru < jarak.get(e.getTujuan())) {
-                    jarak.put(e.getTujuan(), jarakBaru);
-                    sebelum.put(e.getTujuan(), sekarang);
-                    pq.add(e.getTujuan());
+
+                if (jarakBaru < jarak.get(idTujuan)) {
+                    jarak.put(idTujuan, jarakBaru);
+                    sebelum.put(idTujuan, sekarang);
+                    pq.add(idTujuan);
                 }
             }
         }
- 
-        if (jarak.get(tujuan) == Integer.MAX_VALUE) {
+
+        if (jarak.get(tujuanId) == Integer.MAX_VALUE) {
             return new HasilRute(new ArrayList<>(), -1, false);
         }
- 
+
         List<String> rute = new ArrayList<>();
-        String node = tujuan;
+        String node = tujuanId;
         while (node != null) {
-            rute.add(node);
+            rute.add(graph.getNode(node).getNama());
             node = sebelum.get(node);
         }
         Collections.reverse(rute);
- 
-        return new HasilRute(rute, jarak.get(tujuan), true);
+
+        return new HasilRute(rute, jarak.get(tujuanId), true);
     }
- 
+
     // fitur "bandingkan dua kriteria rute"
-    public static void bandingkanRute(Graph graph, String asal, String tujuan) {
-        HasilRute rTercepat = cari(graph, asal, tujuan, "waktu");
-        HasilRute rTermurah = cari(graph, asal, tujuan, "biaya");
- 
+    public static void bandingkanRute(Graph graph, String asalId, String tujuanId) {
+        HasilRute rTercepat = cari(graph, asalId, tujuanId, "waktu");
+        HasilRute rTermurah = cari(graph, asalId, tujuanId, "biaya");
+
         System.out.println("Rute tercepat (berdasarkan waktu):");
         if (rTercepat.ditemukan) {
             System.out.println("  " + rTercepat.rute);
@@ -87,7 +83,7 @@ public class Djikstra {
         } else {
             System.out.println("  Tidak ada rute.");
         }
- 
+
         System.out.println("Rute termurah (berdasarkan biaya):");
         if (rTermurah.ditemukan) {
             System.out.println("  " + rTermurah.rute);
