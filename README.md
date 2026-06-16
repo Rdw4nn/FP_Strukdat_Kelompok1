@@ -196,12 +196,13 @@ Implementasi: `algorithm/Djikstra.java`
 
 ## 7. Design Decision Log
 
-| Komponen | Alternatif | Keputusan | Alasan |
-| :--- | :--- | :--- | :--- |
-| **Representasi Graph** | Adjacency Matrix (Array 2D) | Adjacency List (`HashMap<String, List<Edge>>`) | Jaringan rute transportasi kota umumnya *sparse* (lengang). Penggunaan *Adjacency List* jauh lebih optimal karena memangkas alokasi memori dari **O(V²)** menjadi **O(V + E)**. |
-| **Penyimpanan Path Algoritma** | Menyimpan seluruh riwayat *path* di dalam memori antrean pada semua algoritma pencarian. | BFS menggunakan `Queue<List<String>>`, sedangkan Dijkstra menggunakan *pointer* di `Map<String, String> sebelum` (*backtracking*). | BFS mempertahankan riwayat *path* secara utuh karena berfokus pada *hop* terpendek tanpa bobot. Dijkstra dioptimasi menggunakan *pointer* untuk meminimalisir pemakaian ruang memori saat merekonstruksi rute. |
-| **Validasi Status Node** | Mengecek status *node* (aktif/nonaktif) secara berulang-ulang di dalam setiap iterasi pencarian BFS/Dijkstra. | Menolak pembuatan *edge* menuju halte "Nonaktif" sejak tahap *loading* data di `Graph.addEdge()`. | Sangat menyederhanakan dan mempercepat logika algoritma pencarian karena program tidak perlu lagi membuang waktu untuk memvalidasi status *node* di setiap iterasi. |
-| **Fitur Pencarian Halte** | Menggunakan operasi Regex atau fungsi bawaan `String.contains()` iteratif pada Array. | Menggunakan struktur data **Trie** (*Prefix Tree*). | Penggunaan iterasi standar memakan waktu **O(N × L)**. Trie memangkas waktu pencarian secara drastis menjadi **O(L + R)** (di mana L = panjang karakter, R = jumlah hasil), sehingga aplikasi jauh lebih responsif. |
+| No | Keputusan | Alternatif | Alasan Memilih | Risiko/ Kelemahan |
+|---|---|---|---|---|
+| 1 | Menggunakan *Adjacency List* (`HashMap`) | *Adjacency Matrix* (Array 2D) | Lebih hemat memori untuk karakteristik *graph sparse* jaringan Surabaya ($O(V+E)$). Pencarian ID node berbasis string menjadi instan ($O(1)$). | Proses pengecekan hubungan langsung (*edge lookup*) antar dua node acak secara spesifik sedikit lebih lambat dibanding *matrix*. |
+| 2 | Menggunakan struktur data *Trie* | *HashMap* atau *Linear Search* biasa (`String.contains`) | Sangat efisien untuk fitur *prefix search* (*auto-complete*) nama halte dengan kompleksitas $O(L+R)$ serta mendukung mekanisme *early failure* saat input *typo*. | Konsumsi penggunaan memori objek jauh lebih besar karena setiap karakter huruf membuat sebuah node baru di dalam pohon pencarian. |
+| 3 | Memfilter node nonaktif sejak fase *Data Loading* | Validasi kondisional langsung di dalam algoritma traversal | Menerapkan *Defensive Programming*. Memotong operasi pengecekan status node berulang kali (*runtime*) saat BFS/Dijkstra dijalankan. | Kehilangan fleksibilitas jika sistem membutuhkan perubahan status keaktifan node secara dinamis di tengah-tengah eksekusi program. |
+| 4 | Menyimpan *Pointer Tracking* (`Map` sebelum) di Dijkstra | Menyimpan salinan rute utuh (`List<String>`) langsung di *Queue* | Menghemat alokasi memori secara masif menjadi $O(V)$ karena Dijkstra harus mengeksplorasi banyak cabang rute alternatif sebelum selesai. | Memerlukan proses komputasi tambahan berupa *backtracking* (perunutan balik) di akhir algoritma untuk merekonstruksi rute final. |
+| 5 | Menggunakan *Set* ter-hashing untuk pelacakan *Visited* | Menggunakan struktur *ArrayList* biasa | Operasi pengecekan node yang sudah dikunjungi (`.contains()`) berjalan konstan $O(1)$ *amortized*, menghindari siklus rute berputar (*looping*). | Mengonsumsi sedikit memori tambahan untuk alokasi tabel *hash* dan tidak mempertahankan urutan kronologis elemen yang masuk. |
 
 ---
 
