@@ -196,10 +196,12 @@ Implementasi: `algorithm/Djikstra.java`
 
 ## 7. Design Decision Log
 
-1. **Penggunaan HashMap pada Graph:** Daripada menggunakan *Adjacency Matrix* (array 2D) yang memakan memori **O(V²)**, implementasi *Adjacency List* berbasis `HashMap<String, List<Edge>>` jauh lebih optimal untuk jaringan rute transportasi kota yang umumnya *sparse* (lengang), memangkas pemakaian memori menjadi **O(V + E)**.
-2. **Penyimpanan Path BFS vs Dijkstra:** Pada algoritma BFS, seluruh *path* disimpan berulang di dalam memori antrean (`Queue<List<String>>`). Meskipun memakan ruang lebih, ini dipertahankan karena BFS berfokus pada pencarian *hop* terpendek tanpa peduli bobot. Sebagai optimasi di Dijkstra, memori dihemat dengan hanya menyimpan *pointer* di `Map<String, String> sebelum` dan melakukan *backtracking* (rekonstruksi rute) saat node tujuan sudah ditemukan.
-3. **Validasi Status Node Sejak Awal:** Keputusan untuk menolak pembuatan *edge* menuju halte berstatus "Nonaktif" diletakkan pada tahap *loading* data (di dalam `Graph.addEdge()`). Hal ini sangat menyederhanakan logika pencarian, karena algoritma BFS/Dijkstra tidak perlu lagi melakukan pengecekan status *node* berulang-ulang di setiap iterasi.
-4. **Trie untuk Pencarian Fleksibel:** Penggunaan Regex atau fungsi bawaan `String.contains()` pada Array akan memakan waktu **O(N × L)** setiap kali pencarian dilakukan. Pembuatan struktur data *Trie* memangkas waktu pencarian secara drastis menjadi **O(L + R)** (di mana *L* = panjang karakter input, *R* = jumlah kemunculan), membuat program jauh lebih responsif.
+| Komponen | Alternatif | Keputusan | Alasan |
+| :--- | :--- | :--- | :--- |
+| **Representasi Graph** | Adjacency Matrix (Array 2D) | Adjacency List (`HashMap<String, List<Edge>>`) | Jaringan rute transportasi kota umumnya *sparse* (lengang). Penggunaan *Adjacency List* jauh lebih optimal karena memangkas alokasi memori dari **O(V²)** menjadi **O(V + E)**. |
+| **Penyimpanan Path Algoritma** | Menyimpan seluruh riwayat *path* di dalam memori antrean pada semua algoritma pencarian. | BFS menggunakan `Queue<List<String>>`, sedangkan Dijkstra menggunakan *pointer* di `Map<String, String> sebelum` (*backtracking*). | BFS mempertahankan riwayat *path* secara utuh karena berfokus pada *hop* terpendek tanpa bobot. Dijkstra dioptimasi menggunakan *pointer* untuk meminimalisir pemakaian ruang memori saat merekonstruksi rute. |
+| **Validasi Status Node** | Mengecek status *node* (aktif/nonaktif) secara berulang-ulang di dalam setiap iterasi pencarian BFS/Dijkstra. | Menolak pembuatan *edge* menuju halte "Nonaktif" sejak tahap *loading* data di `Graph.addEdge()`. | Sangat menyederhanakan dan mempercepat logika algoritma pencarian karena program tidak perlu lagi membuang waktu untuk memvalidasi status *node* di setiap iterasi. |
+| **Fitur Pencarian Halte** | Menggunakan operasi Regex atau fungsi bawaan `String.contains()` iteratif pada Array. | Menggunakan struktur data **Trie** (*Prefix Tree*). | Penggunaan iterasi standar memakan waktu **O(N × L)**. Trie memangkas waktu pencarian secara drastis menjadi **O(L + R)** (di mana L = panjang karakter, R = jumlah hasil), sehingga aplikasi jauh lebih responsif. |
 
 ---
 
@@ -475,19 +477,47 @@ Total waktu : 20 menit
 
 ## 11. What if analysis
 
-1. **What if pengguna mencari rute ke halte yang berstatus "Nonaktif" (misal Halte Sidosermo - B16)?**
-   * **Hasil:** Sistem langsung mengembalikan pesan peringatan "Rute tidak ditemukan."
-   * **Analisis:** Karena logika `Graph.addEdge()` secara otomatis memblokir pembuatan *edge* jika asal atau tujuannya berstatus "Nonaktif", maka node tersebut memiliki *in-degree* murni nol. Algoritma `BFS` dan `Dijkstra` akan memproses penelusuran graf namun tidak akan pernah bisa mencapai node tujuan tersebut, sehingga terhindar dari *infinite loop*.
-2. **What if beberapa rute dimatikan pada menu "Simulasi Rute Tidak Tersedia" sehingga jaringan graf terputus (terfragmentasi)?**
-   * **Hasil:** Program mengembalikan output pencarian `ditemukan = false` dan memunculkan pesan "Tidak ada rute yang tersedia dengan kondisi simulasi saat ini."
-   * **Analisis:** Pada setiap iterasi pengecekan tetangga, algoritma menerapkan *guard clause* `if (!edge.isAktif()) continue;`. Jika semua akses rute diputus, elemen di dalam struktur data `Queue` (pada BFS) atau `PriorityQueue` (pada Dijkstra) akan terus di-*poll* hingga kosong sepenuhnya tanpa pernah menyentuh kondisi *break* pada node tujuan. Program menangani antrean kosong ini dengan aman.
-3. **What if pengguna mengetikkan nama stasiun asal/tujuan yang *typo* pada fitur pencarian (PrefixSearcher)?**
-   * **Hasil:** Program seketika memunculkan notifikasi "Data tidak ditemukan."
-   * **Analisis:** Implementasi `Trie` melakukan *lookup* dari level *root* ke bawah. Apabila ditemukan karakter salah yang tidak terdapat pada variabel `children`, pemanggilan `current.children.get(ch)` akan menghasilkan `null`. Program menangkap kondisi ini dan langsung me-*return* *list* kosong tanpa mengeksekusi rekursi berlebihan yang bisa memicu *NullPointerException*.
-4. **What if pengguna memasukkan ID stasiun asal dan tujuan yang sama persis (misal asal: S01, tujuan: S01)?**
-   * **Hasil:** Program akan langsung menampilkan stasiun tersebut sebagai *output* dengan keterangan bobot: 0 transit, 0 menit waktu, dan 0 rupiah biaya.
-   * **Analisis:** Pada algoritma BFS, *Queue* diinisialisasi dengan asal (S01). Pada iterasi pertama, program langsung mendeteksi `sekarang == tujuan`, dan algoritma seketika berhenti. Ini membuktikan fungsionalitas penghentian dini (*early exit*) berjalan dengan baik tanpa perlu mengekspansi graf lebih lanjut.
+**1. Skenario: Jumlah node naik dari 30 menjadi 10.000**
+* **Kondisi:** Dataset diperbesar secara drastis (misalnya mencakup seluruh kota di wilayah Jawa Timur).
+* **Dampak:** * **Trie:** Tidak terlalu terpengaruh. Kompleksitas *insert/search* tetap O(L), hanya alokasi memori yang membesar.
+  * **BFS:** Kompleksitas waktu O(V+E) naik signifikan (dari ~96 operasi menjadi ~15.000+ operasi).
+  * **Dijkstra:** Kompleksitas waktu O((V+E) log V) naik tajam dari ~323 menjadi ~130.000+ operasi.
+* **Kesimpulan:** Program masih dapat berjalan, tetapi waktu eksekusi Dijkstra dan BFS akan terasa lebih lambat. Perlu dipertimbangkan optimasi algoritma lanjutan seperti *bidirectional Dijkstra* atau A*.
 
+---
+
+**2. Skenario: Edge tertentu dihapus (Simulasi rute tidak tersedia)**
+* **Kondisi:** Rute Bus B01 → B11 (Terminal Purabaya ke Jemursari) dihapus atau dinonaktifkan sementara.
+* **Dampak:** Graph menjadi tidak lengkap di area tersebut. Dijkstra akan otomatis mencari rute alternatif melalui jalur lain, sedangkan BFS mungkin menghasilkan rute alternatif dengan transit yang lebih banyak. Jika benar-benar tidak ada rute alternatif, Dijkstra akan mengembalikan nilai *null* atau "rute tidak ditemukan".
+* **Kesimpulan:** Ini mendukung fungsionalitas fitur "Simulasi Rute Tidak Tersedia". Program harus menangani kondisi ini dengan *graceful error message* agar tidak *crash*.
+
+---
+
+**3. Skenario: Bobot edge berubah (Misalnya macet, harga naik)**
+* **Kondisi:** Waktu tempuh B06 → B05 (Halte Tunjungan ke Bambu Runcing) naik drastis dari 5 menit menjadi 30 menit karena kemacetan.
+* **Dampak:** Dijkstra akan mengkalkulasi ulang (*recalculate*) graf dan kemungkinan besar merekomendasikan rute yang berbeda. Rute yang tadinya berstatus tercepat bisa berubah menjadi lambat. Sebaliknya, BFS tidak akan terpengaruh sama sekali karena algoritma tersebut tidak mempertimbangkan bobot (*unweighted*), melainkan hanya jumlah *hop* (transit).
+* **Kesimpulan:** Skenario ini membuktikan mengapa Dijkstra dan BFS bisa menghasilkan *output* jawaban yang berbeda untuk tujuan yang sama. Hal ini sangat relevan dengan aspek analisis HOTS (*Higher Order Thinking Skills*) pada implementasi graf.
+
+---
+
+**4. Skenario: Input user tidak ditemukan di Trie**
+* **Kondisi:** Pengguna mengetikkan "Stasiun Malang" yang secara faktual tidak ada di dalam dataset.
+* **Dampak:** Traversal pada Trie akan langsung berhenti di karakter yang tidak memiliki *child node*, sehingga tidak ada hasil yang dikembalikan. Jika *input* kosong ini langsung dilempar ke algoritma Dijkstra tanpa divalidasi, program akan terkena `NullPointerException`.
+* **Kesimpulan:** Program diwajibkan melakukan validasi *input* di level Trie sebelum melanjutkannya ke pencarian rute, serta memberikan pesan *error* yang informatif (contoh: "Halte tidak ditemukan, coba awalan: Stasiun Surabaya...").
+
+---
+
+**5. Skenario: Terdapat data duplikat di dataset**
+* **Kondisi:** Node S01 (Stasiun Gubeng) dimasukkan dua kali dengan penamaan yang sedikit berbeda ke dalam file CSV.
+* **Dampak:** Trie akan menyimpan dua entri referensi yang berbeda sehingga hasil *search* menjadi ambigu bagi *user*. Graph juga bisa memiliki dua *node* dengan ID yang terduplikasi, menyebabkan *edge* mengarah ke memori *node* yang salah.
+* **Kesimpulan:** Program memerlukan *layer* validasi *uniqueness* saat proses *load dataset*. Pengecekan duplikasi ID wajib dilakukan sebelum objek di-*insert* ke dalam struktur data utama.
+
+---
+
+**6. Skenario: Graph tidak terhubung (*Disconnected Graph*)**
+* **Kondisi:** Halte B15 (Kenjeran) terisolasi karena semua *edge* (rute masuk/keluar) dihapus secara paksa.
+* **Dampak:** BFS yang dimulai dari *node* manapun tidak akan pernah bisa mencapai B15. Dijkstra akan mengembalikan nilai jarak = ∞ (*infinity*) ke arah B15. 
+* **Kesimpulan:** Program perlu dirancang untuk menangani status *disconnected graph* dengan menampilkan pesan peringatan yang aman (contoh: "Tidak ada rute yang tersedia ke halte tujuan") daripada membiarkan proses *looping* tidak terkendali.
 ---
 
 ## 12. Kesimpulan
