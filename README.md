@@ -68,61 +68,16 @@ project/
 
 ### Trie
 
-Trie (prefix tree) digunakan untuk fitur pencarian halte berdasarkan awalan nama. Setiap node dalam Trie menyimpan satu karakter, dan setiap path dari root ke node yang ditandai `isEndOfWord = true` merepresentasikan satu nama halte. Node akhir menyimpan referensi ke objek `Node` (model halte) yang bersangkutan.
+*Prefix tree* (Trie) digunakan untuk fitur pencarian halte berdasarkan awalan nama. Setiap node dalam Trie menyimpan satu karakter, dan setiap *path* dari *root* ke node yang ditandai dengan `isEndOfWord = true` merepresentasikan satu nama halte secara utuh. Node akhir tersebut menyimpan referensi ke objek `Node` (model halte) yang bersangkutan.
 
-Visualisasi Trie setelah insert tiga nama: "stasiun surabaya gubeng" (S01), "stasiun surabaya pasar turi" (S02), dan "halte diponegoro" (B08). Semua nama diubah ke lowercase sebelum diinsert.
+Visualisasi Trie setelah penambahan tiga nama: "stasiun surabaya gubeng" (S01), "stasiun surabaya pasar turi" (S02), dan "halte diponegoro" (B08). Seluruh nama dikonversi menjadi huruf kecil (*lowercase*) sebelum dimasukkan.
 
 ```text
 root
-├── s
-│   └── t
-│       └── a
-│           └── s
-│               └── i
-│                   └── u
-│                       └── n
-│                           └── (spasi)
-│                               └── s
-│                                   └── u
-│                                       └── r
-│                                           └── a
-│                                               └── b
-│                                                   └── a
-│                                                       └── y
-│                                                           └── a
-│                                                               └── (spasi)
-│                                                                   ├── g
-│                                                                   │   └── u
-│                                                                   │       └── b
-│                                                                   │           └── e
-│                                                                   │               └── n
-│                                                                   │                   └── g  [END -> S01]
-│                                                                   └── p
-│                                                                       └── a
-│                                                                           └── s
-│                                                                               └── a
-│                                                                                   └── r
-│                                                                                       └── (spasi)
-│                                                                                           └── t
-│                                                                                               └── u
-│                                                                                                   └── r
-│                                                                                                       └── i  [END -> S02]
-└── h
-    └── a
-        └── l
-            └── t
-                └── e
-                    └── (spasi)
-                        └── d
-                            └── i
-                                └── p
-                                    └── o
-                                        └── n
-                                            └── e
-                                                └── g
-                                                    └── o
-                                                        └── r
-                                                            └── o  [END -> B08]
+├── s - t - a - s - i - u - n - (spasi) - s - u - r - a - b - a - y - a - (spasi)
+│                                                                           ├── g - u - b - e - n - g  [END -> S01]
+│                                                                           └── p - a - s - a - r - (spasi) - t - u - r - i  [END -> S02]
+└── h - a - l - t - e - (spasi) - d - i - p - o - n - e - g - o - r - o  [END -> B08]
 ```
 
 Ketika user mengetik prefix `"sta"`, traversal dimulai dari root melalui `s -> t -> a`, kemudian semua node di bawah subtree tersebut dikumpulkan secara rekursif dan dikembalikan sebagai hasil pencarian.
