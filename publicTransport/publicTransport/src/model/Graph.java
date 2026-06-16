@@ -13,9 +13,19 @@ public class Graph {
 
     public void addEdge(String idEdge, String dariId, String tujuanId, int waktuMenit, int biayaRupiah, String jenisTransportasi) {
         Node tujuanNode = nodes.get(tujuanId);
+        Node dariNode   = nodes.get(dariId);
         if (tujuanNode == null) {
             throw new IllegalArgumentException("Node tujuan " + tujuanId + " belum ditambahkan");
         }
+        if (dariNode == null) {
+            throw new IllegalArgumentException("Node asal " + dariId + " belum ditambahkan");
+        }
+
+        if (dariNode.getStatus().equalsIgnoreCase("Nonaktif") || tujuanNode.getStatus().equalsIgnoreCase("Nonaktif")) {
+        System.out.println("Edge " + idEdge + " dilewati node yang nonaktif.");
+        return;
+        }
+
         adjList.get(dariId).add(new Edge(idEdge, tujuanNode, waktuMenit, biayaRupiah, jenisTransportasi));
     }
 
@@ -25,6 +35,17 @@ public class Graph {
         if (edges != null) {
             edges.removeIf(e -> e.getTujuan().getId().equals(tujuanId));
         }
+    }
+
+    public void updateBobot(String dariId, String tujuanId, int waktuBaru, int biayaBaru) {
+    for (Edge e : adjList.get(dariId)) {
+        if (e.getTujuan().getId().equals(tujuanId)) {
+            e.setWaktuMenit(waktuBaru);
+            e.setBiayaRupiah(biayaBaru);
+            System.out.println("Bobot edge " + dariId + "->" + tujuanId + " berhasil diubah.");
+            return;
+        }
+    }
     }
 
     public List<Edge> getNeighbors(String nodeId) {
