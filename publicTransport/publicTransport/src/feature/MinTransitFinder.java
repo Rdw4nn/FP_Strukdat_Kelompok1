@@ -8,16 +8,13 @@ import java.util.Scanner;
 
 public class MinTransitFinder {
 
+    // Referensi graph yang berisi seluruh node dan edge transportasi
     private final Graph graph;
 
     public MinTransitFinder(Graph graph) {
         this.graph = graph;
     }
 
-    /**
-     * Fitur: Cari rute dengan jumlah transit paling sedikit.
-     * Dipanggil dari Main.java saat user memilih menu ini.
-     */
     public void runFeature(Scanner scanner) {
         System.out.println("\n========================================");
         System.out.println("   CARI RUTE MINIMUM TRANSIT ");
@@ -65,18 +62,24 @@ public class MinTransitFinder {
         List<String> rute = hasil.rute;
         for (int i = 0; i < rute.size(); i++) {
             Node node = graph.getNode(rute.get(i));
+
+             // Node pertama diberi label ASAL
             if (i == 0) {
                 System.out.println("  " + (i + 1) + ". [" + node.getId() + "] " + node.getNama()
                         + " (" + node.getJenis() + ") <- ASAL");
-            } else if (i == rute.size() - 1) {
+            } 
+            // Node terakhir diberi label TUJUAN
+            else if (i == rute.size() - 1) {
                 System.out.println("  " + (i + 1) + ". [" + node.getId() + "] " + node.getNama()
                         + " (" + node.getJenis() + ") <- TUJUAN");
-            } else {
+            } 
+            // Node lainnya adalah node transit biasa
+            else {
                 System.out.println("  " + (i + 1) + ". [" + node.getId() + "] " + node.getNama()
                         + " (" + node.getJenis() + ")");
             }
 
-            // Tampilkan info edge ke node berikutnya
+            // mwnampilkan info edge (jenis transportasi, waktu, biaya) antara node sekarang dan node berikutnya, kecuali untuk node terakhir
             if (i < rute.size() - 1) {
                 tampilkanInfoEdge(rute.get(i), rute.get(i + 1));
             }
@@ -93,7 +96,9 @@ public class MinTransitFinder {
 
     // Tampilkan info edge antara dua node
     private void tampilkanInfoEdge(String dariId, String keId) {
+        // Cari edge yang menghubungkan dariId ke keId
         for (model.Edge edge : graph.getNeighbors(dariId)) {
+            
             if (edge.isAktif() && edge.getTujuan().getId().equals(keId)) {
                 System.out.println( "     >> " + edge.getJenisTransportasi()
                         + " | " + edge.getWaktuMenit() + " menit"
