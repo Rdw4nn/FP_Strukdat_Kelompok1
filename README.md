@@ -1,4 +1,4 @@
-# FINAL PROJECT STRUKDAT: Sistem Transportasi Umum Surabaya
+# FINAL PROJECT STRUKDAT: Sistem Transportasi Umum
 ## Opsi 5 - Public Transport Planner 
 
 ## Kelompok 1
@@ -35,7 +35,7 @@ Satu node berstatus `Nonaktif`: B16 (Halte Sidosermo). Node ini tidak akan memil
 
 ### edges.csv
 
-Berisi 65 edge berarah. Format kolom: `id_edge, dari, ke, waktu_menit, biaya_rupiah, jenis_transportasi`
+Berisi 66 edge berarah. Format kolom: `id_edge, dari, ke, waktu_menit, biaya_rupiah, jenis_transportasi`
 
 Rentang bobot:
 - Waktu: 5 menit s.d. 25 menit
