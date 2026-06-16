@@ -34,8 +34,6 @@
 
 Proyek ini merupakan simulasi sistem informasi transportasi umum kota Surabaya yang dibangun menggunakan struktur data dan algoritma dasar. Program memodelkan jaringan halte bus dan stasiun kereta sebagai graf berarah berbobot, kemudian menyediakan beberapa fitur pencarian rute yang dapat digunakan oleh pengguna.
 
-Proyek ini dikerjakan sebagai tugas akhir mata kuliah Struktur Data dan Algoritma.
-
 ---
 
 ## 2. Struktur Direktori
