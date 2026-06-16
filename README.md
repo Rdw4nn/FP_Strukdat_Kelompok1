@@ -689,9 +689,10 @@ Catatan tentang kompleksitas ruang BFS: implementasi ini menyimpan seluruh path 
 
 ## 11. Batasan dan Catatan
 
-- Program hanya berjalan di terminal (CLI), tidak ada antarmuka grafis.
-- Path file CSV bersifat relatif (`../../../data/`), sehingga program harus dijalankan dari direktori `src/`. Jika dijalankan dari direktori lain, path di `App.java` perlu disesuaikan.
-- `MinHeap` custom yang ada di `model/MinHeap.java` tidak digunakan oleh `Djikstra.java`. Dijkstra menggunakan `PriorityQueue` bawaan Java. `MinHeap` tersedia untuk keperluan demonstrasi dan unit test.
-- Fitur simulasi di `RouteSimulator` hanya mengubah flag `aktif` pada objek `Edge`, bukan menghapus edge dari graf. Semua perubahan dibatalkan otomatis saat user keluar dari menu simulasi.
-- Program belum menangani input non-integer secara graceful. Jika user memasukkan huruf saat diminta nomor pilihan, program akan melempar `NumberFormatException` dan berhenti.
-- Dataset tidak mencakup seluruh jaringan transportasi Surabaya yang sebenarnya. Data dibuat untuk keperluan akademis dengan 30 node dan 65 edge.
+* **Format Antarmuka:** Program dibangun sepenuhnya dengan *Command Line Interface* (CLI) dan tidak menyediakan *Graphical User Interface* (GUI).
+* **Path Data:** Sistem membaca file CSV secara relatif dari direktori `src/` (`../../../data/`). Jika program dijalankan dari lokasi berbeda, alokasi direktori pada `App.java` memerlukan penyesuaian ulang.
+* **Implementasi Algoritma:** Struktur `MinHeap` kustom pada `model/MinHeap.java` difungsikan khusus untuk demonstrasi dan *unit testing*. Algoritma utama pada `Djikstra.java` menggunakan struktur `PriorityQueue` bawaan Java.
+* **Simulasi Rute:** Modifikasi *edge* pada fitur simulasi bersifat temporer (mengubah *flag* `aktif = false`) tanpa menghapus objek secara fisik. Kondisi graf akan dinormalkan sepenuhnya saat keluar dari menu.
+* **Validasi Masukan:** Sistem validasi *error* pada antarmuka CLI bersifat mendasar. Kesalahan pengetikan (misal: memasukkan karakter huruf saat instruksi meminta angka) akan menyebabkan *exception* `NumberFormatException`.
+* **Skala Dataset:** Himpunan graf (30 node dan 65 *edge*) dibangun secara khusus untuk mengakomodir keperluan akademik dan validasi algoritma. Dataset ini tidak merepresentasikan infrastruktur transportasi Kota Surabaya secara nyata dan menyeluruh.
+```
