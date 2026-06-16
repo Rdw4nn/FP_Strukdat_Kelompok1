@@ -485,35 +485,30 @@ Total waktu : 20 menit
   * **Dijkstra:** Kompleksitas waktu O((V+E) log V) naik tajam dari ~323 menjadi ~130.000+ operasi.
 * **Kesimpulan:** Program masih dapat berjalan, tetapi waktu eksekusi Dijkstra dan BFS akan terasa lebih lambat. Perlu dipertimbangkan optimasi algoritma lanjutan seperti *bidirectional Dijkstra* atau A*.
 
----
 
 **2. Skenario: Edge tertentu dihapus (Simulasi rute tidak tersedia)**
 * **Kondisi:** Rute Bus B01 → B11 (Terminal Purabaya ke Jemursari) dihapus atau dinonaktifkan sementara.
 * **Dampak:** Graph menjadi tidak lengkap di area tersebut. Dijkstra akan otomatis mencari rute alternatif melalui jalur lain, sedangkan BFS mungkin menghasilkan rute alternatif dengan transit yang lebih banyak. Jika benar-benar tidak ada rute alternatif, Dijkstra akan mengembalikan nilai *null* atau "rute tidak ditemukan".
 * **Kesimpulan:** Ini mendukung fungsionalitas fitur "Simulasi Rute Tidak Tersedia". Program harus menangani kondisi ini dengan *graceful error message* agar tidak *crash*.
 
----
 
 **3. Skenario: Bobot edge berubah (Misalnya macet, harga naik)**
 * **Kondisi:** Waktu tempuh B06 → B05 (Halte Tunjungan ke Bambu Runcing) naik drastis dari 5 menit menjadi 30 menit karena kemacetan.
 * **Dampak:** Dijkstra akan mengkalkulasi ulang (*recalculate*) graf dan kemungkinan besar merekomendasikan rute yang berbeda. Rute yang tadinya berstatus tercepat bisa berubah menjadi lambat. Sebaliknya, BFS tidak akan terpengaruh sama sekali karena algoritma tersebut tidak mempertimbangkan bobot (*unweighted*), melainkan hanya jumlah *hop* (transit).
 * **Kesimpulan:** Skenario ini membuktikan mengapa Dijkstra dan BFS bisa menghasilkan *output* jawaban yang berbeda untuk tujuan yang sama. Hal ini sangat relevan dengan aspek analisis HOTS (*Higher Order Thinking Skills*) pada implementasi graf.
 
----
 
 **4. Skenario: Input user tidak ditemukan di Trie**
 * **Kondisi:** Pengguna mengetikkan "Stasiun Malang" yang secara faktual tidak ada di dalam dataset.
 * **Dampak:** Traversal pada Trie akan langsung berhenti di karakter yang tidak memiliki *child node*, sehingga tidak ada hasil yang dikembalikan. Jika *input* kosong ini langsung dilempar ke algoritma Dijkstra tanpa divalidasi, program akan terkena `NullPointerException`.
 * **Kesimpulan:** Program diwajibkan melakukan validasi *input* di level Trie sebelum melanjutkannya ke pencarian rute, serta memberikan pesan *error* yang informatif (contoh: "Halte tidak ditemukan, coba awalan: Stasiun Surabaya...").
 
----
 
 **5. Skenario: Terdapat data duplikat di dataset**
 * **Kondisi:** Node S01 (Stasiun Gubeng) dimasukkan dua kali dengan penamaan yang sedikit berbeda ke dalam file CSV.
 * **Dampak:** Trie akan menyimpan dua entri referensi yang berbeda sehingga hasil *search* menjadi ambigu bagi *user*. Graph juga bisa memiliki dua *node* dengan ID yang terduplikasi, menyebabkan *edge* mengarah ke memori *node* yang salah.
 * **Kesimpulan:** Program memerlukan *layer* validasi *uniqueness* saat proses *load dataset*. Pengecekan duplikasi ID wajib dilakukan sebelum objek di-*insert* ke dalam struktur data utama.
 
----
 
 **6. Skenario: Graph tidak terhubung (*Disconnected Graph*)**
 * **Kondisi:** Halte B15 (Kenjeran) terisolasi karena semua *edge* (rute masuk/keluar) dihapus secara paksa.
