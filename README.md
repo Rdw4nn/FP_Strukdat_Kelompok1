@@ -1,4 +1,5 @@
-# FINAL PROJECT STRUKDAT 
+# FINAL PROJECT STRUKDAT: Sistem Transportasi Umum Surabaya
+## Opsi 5 - Public Transport Planner 
 
 ## Kelompok 1
 | No  | Nama                           | NRP        |
@@ -11,60 +12,72 @@
 
 ---
 
-## Opsi 5 - Public Transport Planner 
-
----
-
-## Daftar Isi
-1. [Deskripsi Proyek](#1-deskripsi-proyek)
-2. [Struktur Direktori](#2-struktur-direktori)
-3. [Struktur Data yang Digunakan](#3-struktur-data-yang-digunakan)
-4. [Algoritma yang Diimplementasikan](#4-algoritma-yang-diimplementasikan)
-5. [Dataset](#5-dataset)
-6. [Fitur Aplikasi](#6-fitur-aplikasi)
-7. [Cara Menjalankan Program](#7-cara-menjalankan-program)
-8. [Tracing Manual Algoritma](#8-tracing-manual-algoritma)
-9. [Skenario Pengujian](#9-skenario-pengujian)
-10. [Analisis Kompleksitas](#10-analisis-kompleksitas)
-11. [Batasan dan Catatan](#11-batasan-dan-catatan)
-
----
-
 ## 1. Deskripsi Masalah
 
 Proyek ini merupakan simulasi sistem informasi transportasi umum kota Surabaya yang dibangun menggunakan struktur data dan algoritma dasar. Program memodelkan jaringan halte bus dan stasiun kereta sebagai graf berarah berbobot, kemudian menyediakan beberapa fitur pencarian rute yang dapat digunakan oleh pengguna.
 
 ---
 
-## 2. Struktur Direktori
+## 2. Dataset
 
-```text
-project/
-├── src/
-│   ├── App.java                  -- Entry point, main menu
-│   ├── model/
-│   │   ├── Node.java             -- Representasi halte/stasiun
-│   │   ├── Edge.java             -- Representasi rute/koneksi antar node
-│   │   ├── Graph.java            -- Graf adjacency list
-│   │   ├── Trie.java             -- Struktur data Trie
-│   │   ├── MinHeap.java          -- Priority queue untuk Dijkstra
-│   │   ├── TestTrie.java         -- Unit test Trie
-│   │   └── TestHeap.java         -- Unit test MinHeap
-│   ├── algorithm/
-│   │   ├── BFS.java              -- Algoritma BFS minimum transit
-│   │   └── Djikstra.java         -- Algoritma Dijkstra
-│   └── feature/
-│       ├── PrefixSearcher.java   -- Fitur pencarian halte
-│       ├── MinTransitFinder.java -- Fitur BFS dengan tampilan lengkap
-│       └── RouteSimulator.java   -- Fitur simulasi rute nonaktif
-└── data/
-    ├── nodes.csv                 -- Data halte dan stasiun
-    └── edges.csv                 -- Data rute antar halte/stasiun
-```
+Dataset terdiri dari dua file CSV yang berada di direktori `data/`.
+
+### nodes.csv
+
+Berisi 30 node (halte dan stasiun). Format kolom: `id, nama, jenis, area, fasilitas, status`
+
+| Jenis | Jumlah | Prefix ID |
+|---|---|---|
+| Kereta | 10 | S01 s.d. S10 |
+| Bus | 20 | B01 s.d. B20 |
+
+Satu node berstatus `Nonaktif`: B16 (Halte Sidosermo). Node ini tidak akan memiliki edge masuk karena `Graph.addEdge` memvalidasi status node sebelum menambahkan edge.
+
+### edges.csv
+
+Berisi 65 edge berarah. Format kolom: `id_edge, dari, ke, waktu_menit, biaya_rupiah, jenis_transportasi`
+
+Rentang bobot:
+- Waktu: 5 menit s.d. 25 menit
+- Biaya: Rp 2.000 s.d. Rp 8.000
+
+Hampir semua edge berpasangan bolak-balik (dua edge terpisah untuk dua arah). Edge yang melibatkan node nonaktif tidak berhasil ditambahkan ke graf saat loading.
 
 ---
 
-## 3. Struktur Data yang Digunakan
+## 3. Struktur Graph yang Digunakan
+
+### Graph (Adjacency List)
+
+Graf direpresentasikan menggunakan adjacency list dengan `HashMap<String, List<Edge>>`. Setiap key adalah ID node, dan value-nya adalah list edge yang keluar dari node tersebut.
+
+Contoh representasi sebagian graf dari dataset:
+
+```text
+S01 (Stasiun Surabaya Gubeng)
+├── E01 -> S03 | 8 menit  | Rp 3.000 | Kereta
+├── E11 -> S02 | 15 menit | Rp 5.000 | Kereta
+├── E52 -> B20 | 10 menit | Rp 4.000 | Bus
+└── E64 -> B06 | 12 menit | Rp 5.000 | Bus
+
+S03 (Stasiun Wonokromo)
+├── E02 -> S01 | 8 menit  | Rp 3.000 | Kereta
+├── E03 -> S04 | 12 menit | Rp 4.000 | Kereta
+├── E15 -> S05 | 10 menit | Rp 3.000 | Kereta
+└── E22 -> B01 | 10 menit | Rp 5.000 | Bus
+
+B06 (Halte Tunjungan)
+├── E34 -> B07 | 8 menit  | Rp 3.000 | Bus
+└── E36 -> B05 | 5 menit  | Rp 3.000 | Bus
+```
+
+Graf bersifat directed (berarah) sehingga edge dari A ke B tidak otomatis berlaku sebaliknya. Dataset ini menyediakan edge bolak-balik secara eksplisit, misalnya E01 (S01->S03) dan E02 (S03->S01) adalah pasangan arah yang berlawanan.
+
+Implementasi: `model/Graph.java`
+
+---
+
+## 4. Struktur Tree yang Digunakan
 
 ### Trie
 
@@ -88,6 +101,7 @@ Implementasi: `model/Trie.java`
 
 ---
 
+## 5. Struktur MinHeap yang Digunakan
 ### MinHeap
 
 MinHeap digunakan oleh algoritma Dijkstra sebagai priority queue untuk selalu memproses node dengan bobot terkecil terlebih dahulu. Heap diimplementasikan menggunakan array dengan properti:
@@ -138,37 +152,7 @@ Implementasi: `model/MinHeap.java`
 
 ---
 
-### Graph (Adjacency List)
-
-Graf direpresentasikan menggunakan adjacency list dengan `HashMap<String, List<Edge>>`. Setiap key adalah ID node, dan value-nya adalah list edge yang keluar dari node tersebut.
-
-Contoh representasi sebagian graf dari dataset:
-
-```text
-S01 (Stasiun Surabaya Gubeng)
-├── E01 -> S03 | 8 menit  | Rp 3.000 | Kereta
-├── E11 -> S02 | 15 menit | Rp 5.000 | Kereta
-├── E52 -> B20 | 10 menit | Rp 4.000 | Bus
-└── E64 -> B06 | 12 menit | Rp 5.000 | Bus
-
-S03 (Stasiun Wonokromo)
-├── E02 -> S01 | 8 menit  | Rp 3.000 | Kereta
-├── E03 -> S04 | 12 menit | Rp 4.000 | Kereta
-├── E15 -> S05 | 10 menit | Rp 3.000 | Kereta
-└── E22 -> B01 | 10 menit | Rp 5.000 | Bus
-
-B06 (Halte Tunjungan)
-├── E34 -> B07 | 8 menit  | Rp 3.000 | Bus
-└── E36 -> B05 | 5 menit  | Rp 3.000 | Bus
-```
-
-Graf bersifat directed (berarah) sehingga edge dari A ke B tidak otomatis berlaku sebaliknya. Dataset ini menyediakan edge bolak-balik secara eksplisit, misalnya E01 (S01->S03) dan E02 (S03->S01) adalah pasangan arah yang berlawanan.
-
-Implementasi: `model/Graph.java`
-
----
-
-## 4. Algoritma yang Diimplementasikan
+## 6. Algoritma yang Digunakan
 
 ### BFS (Breadth-First Search)
 
@@ -210,93 +194,12 @@ Implementasi: `algorithm/Djikstra.java`
 
 ---
 
-## 5. Dataset
+## 7. Design Decision Log
 
-Dataset terdiri dari dua file CSV yang berada di direktori `data/`.
-
-### nodes.csv
-
-Berisi 30 node (halte dan stasiun). Format kolom: `id, nama, jenis, area, fasilitas, status`
-
-| Jenis | Jumlah | Prefix ID |
-|---|---|---|
-| Kereta | 10 | S01 s.d. S10 |
-| Bus | 20 | B01 s.d. B20 |
-
-Satu node berstatus `Nonaktif`: B16 (Halte Sidosermo). Node ini tidak akan memiliki edge masuk karena `Graph.addEdge` memvalidasi status node sebelum menambahkan edge.
-
-### edges.csv
-
-Berisi 65 edge berarah. Format kolom: `id_edge, dari, ke, waktu_menit, biaya_rupiah, jenis_transportasi`
-
-Rentang bobot:
-- Waktu: 5 menit s.d. 25 menit
-- Biaya: Rp 2.000 s.d. Rp 8.000
-
-Hampir semua edge berpasangan bolak-balik (dua edge terpisah untuk dua arah). Edge yang melibatkan node nonaktif tidak berhasil ditambahkan ke graf saat loading.
-
----
-
-## 6. Fitur Aplikasi
-
-Program dijalankan lewat menu interaktif di terminal.
-
-**Menu 1 - Cari halte/stasiun berdasarkan nama**
-Pengguna memasukkan awalan nama halte. Trie mengembalikan semua halte yang namanya dimulai dengan prefix tersebut, lengkap dengan jenis, area, dan status.
-
-**Menu 2 - Cari rute tercepat (Dijkstra)**
-Pengguna memasukkan ID asal dan tujuan. Program mengembalikan rute dengan total waktu paling singkat.
-
-**Menu 3 - Cari rute termurah (Dijkstra)**
-Sama seperti menu 2, namun optimasi berdasarkan total biaya perjalanan.
-
-**Menu 4 - Cari rute minimum transit (BFS)**
-Pengguna memasukkan ID asal dan tujuan. Program mengembalikan rute dengan jumlah perpindahan halte paling sedikit, disertai total waktu dan biaya.
-
-**Menu 5 - Bandingkan dua kriteria rute (Dijkstra)**
-Menampilkan rute tercepat dan rute termurah secara berdampingan untuk dibandingkan.
-
-**Menu 6 - Simulasi rute tidak tersedia**
-Pengguna dapat menonaktifkan satu atau lebih edge berdasarkan ID edge, lalu mencari rute minimum transit untuk melihat dampaknya. Edge tidak dihapus dari graf, hanya di-flag `aktif = false`. Saat keluar dari menu ini, semua edge dikembalikan ke kondisi aktif secara otomatis.
-
-**Menu 7 - Cari halte dan rute sekaligus (Integrasi Trie + BFS)**
-Pengguna mencari halte asal dan tujuan menggunakan prefix nama (Trie), kemudian program langsung menjalankan BFS untuk mendapatkan rute minimum transit.
-
----
-
-## 7. Cara Menjalankan Program
-
-Pastikan Java Development Kit (JDK) versi 11 atau lebih baru sudah terinstal.
-
-```bash
-# 1. Masuk ke direktori src
-cd src
-
-# 2. Kompilasi semua file Java
-javac -encoding UTF-8 model/*.java algorithm/*.java feature/*.java App.java
-
-# 3. Jalankan program
-java -Dfile.encoding=UTF-8 App
-```
-
-Untuk menjalankan unit test secara terpisah:
-
-```bash
-# Test Trie
-cd src
-javac -encoding UTF-8 model/Node.java model/Trie.java model/TestTrie.java
-java model.TestTrie
-
-# Test MinHeap
-javac -encoding UTF-8 model/Node.java model/MinHeap.java model/TestHeap.java
-java model.TestHeap
-
-# Test Dijkstra dengan data kecil
-javac -encoding UTF-8 model/*.java algorithm/Djikstra.java model/TesProgram.java
-java model.TesProgram
-```
-
-Catatan: Program membaca file CSV dari path relatif `../../../data/nodes.csv` dan `../../../data/edges.csv` relatif terhadap direktori `src/`. Pastikan struktur direktori sesuai sebelum menjalankan program.
+1. **Penggunaan HashMap pada Graph:** Daripada menggunakan *Adjacency Matrix* (array 2D) yang memakan memori **O(V²)**, implementasi *Adjacency List* berbasis `HashMap<String, List<Edge>>` jauh lebih optimal untuk jaringan rute transportasi kota yang umumnya *sparse* (lengang), memangkas pemakaian memori menjadi **O(V + E)**.
+2. **Penyimpanan Path BFS vs Dijkstra:** Pada algoritma BFS, seluruh *path* disimpan berulang di dalam memori antrean (`Queue<List<String>>`). Meskipun memakan ruang lebih, ini dipertahankan karena BFS berfokus pada pencarian *hop* terpendek tanpa peduli bobot. Sebagai optimasi di Dijkstra, memori dihemat dengan hanya menyimpan *pointer* di `Map<String, String> sebelum` dan melakukan *backtracking* (rekonstruksi rute) saat node tujuan sudah ditemukan.
+3. **Validasi Status Node Sejak Awal:** Keputusan untuk menolak pembuatan *edge* menuju halte berstatus "Nonaktif" diletakkan pada tahap *loading* data (di dalam `Graph.addEdge()`). Hal ini sangat menyederhanakan logika pencarian, karena algoritma BFS/Dijkstra tidak perlu lagi melakukan pengecekan status *node* berulang-ulang di setiap iterasi.
+4. **Trie untuk Pencarian Fleksibel:** Penggunaan Regex atau fungsi bawaan `String.contains()` pada Array akan memakan waktu **O(N × L)** setiap kali pencarian dilakukan. Pembuatan struktur data *Trie* memangkas waktu pencarian secara drastis menjadi **O(L + R)** (di mana *L* = panjang karakter input, *R* = jumlah kemunculan), membuat program jauh lebih responsif.
 
 ---
 
@@ -515,139 +418,80 @@ Total waktu : 20 menit
 
 ---
 
-## 9. Skenario Pengujian
+## 9. Screenshot Hasil Program
+---
+**Fitur 1**
 
-### Skenario Normal
-
-**Skenario 1: Rute tercepat dengan jalur kereta langsung**
-
-| Atribut | Detail |
-|---|---|
-| Input | Asal: S01, Tujuan: S09 |
-| Fitur | Menu 2, Dijkstra mode waktu |
-| Ekspektasi | Rute: S01 -> S03 -> S04 -> S08 -> S09 |
-| Total waktu | 8 + 12 + 7 + 5 = 32 menit |
-
-Jalur ini mengikuti jalur kereta langsung dari Gubeng ke Sidoarjo. Tidak ada jalur alternatif yang lebih cepat berdasarkan bobot edge yang tersedia di dataset.
+<img width="608" height="926" alt="image" src="https://github.com/user-attachments/assets/b3ac5b3e-6908-4a86-a242-793f46cc4eb5" />
 
 ---
+**Fitur 2**
 
-**Skenario 2: Rute minimum transit antara terminal dan halte**
-
-| Atribut | Detail |
-|---|---|
-| Input | Asal: B01, Tujuan: B07 |
-| Fitur | Menu 4, BFS |
-| Ekspektasi | Rute melalui node perantara paling sedikit |
-
-B01 (Terminal Purabaya) memiliki edge ke S03 dan B11. Dari B11 terdapat edge ke B12, dari B12 ke B10, dari B10 ke B03, dari B03 ke B07. BFS akan menemukan path terpendek dalam satuan hop, bukan dalam satuan waktu atau biaya.
+<img width="1566" height="512" alt="image" src="https://github.com/user-attachments/assets/4a4a6fb3-d7d0-4db2-a829-1fc54d305254" />
 
 ---
+**Fitur 3**
 
-**Skenario 3: Pencarian halte dengan prefix lalu rute sekaligus**
-
-| Atribut | Detail |
-|---|---|
-| Input | Prefix asal: "terminal", prefix tujuan: "halte tunj" |
-| Fitur | Menu 7, integrasi Trie + BFS |
-| Hasil Trie asal | B01 (Terminal Purabaya), B02 (Terminal Tambak Osowilangun) |
-| Hasil Trie tujuan | B06 (Halte Tunjungan) |
-| Ekspektasi | User memilih B01, lalu BFS mencari rute B01 -> B06 |
+<img width="1314" height="502" alt="image" src="https://github.com/user-attachments/assets/fb7bc921-f76d-4c15-956a-c5d2d3b87027" />
 
 ---
+**Fitur 4**
 
-### Edge Case
-
-**Edge Case 1: Asal sama dengan tujuan**
-
-| Atribut | Detail |
-|---|---|
-| Input | Asal: S01, Tujuan: S01 |
-| Fitur | Menu 4, BFS |
-| Ekspektasi | Rute: [S01], jumlahTransit: 0, totalWaktu: 0, totalBiaya: 0 |
-| Penanganan | Ditangani secara eksplisit di awal fungsi `cariMinimumTransit` sebelum queue diinisialisasi |
+<img width="628" height="1048" alt="image" src="https://github.com/user-attachments/assets/4258bb7b-feb4-44aa-b000-e27807cffa14" />
 
 ---
+**Fitur 5**
 
-**Edge Case 2: Tujuan adalah node nonaktif**
-
-| Atribut | Detail |
-|---|---|
-| Input | Asal: S01, Tujuan: B16 |
-| Fitur | Menu 4, BFS |
-| Ekspektasi | BFS tidak menemukan rute karena B16 tidak memiliki edge masuk |
-| Penanganan | `Graph.addEdge` melewati penambahan edge jika node asal atau tujuan berstatus `Nonaktif`. Akibatnya B16 tidak punya edge masuk sama sekali, sehingga BFS tidak akan pernah mencapainya. |
+<img width="1492" height="582" alt="image" src="https://github.com/user-attachments/assets/31abd9de-1759-43c4-bda5-3d65deb18ec3" />
 
 ---
+**Fitur 6**
 
-**Edge Case 3: Semua edge keluar dari node asal dinonaktifkan via simulasi**
+<img width="996" height="1172" alt="image" src="https://github.com/user-attachments/assets/ff83f00b-ca6d-44d4-b8ba-9c68cf90ceda" />
+<img width="996" height="756" alt="image" src="https://github.com/user-attachments/assets/0fd873a0-e379-4acd-a819-0fb945345cd4" />
+<img width="790" height="616" alt="image" src="https://github.com/user-attachments/assets/55d610a1-5b4d-44f0-b9e7-283577763fb3" />
 
-| Atribut | Detail |
-|---|---|
-| Langkah | Nonaktifkan E01, E11, E52, E64 (semua edge keluar dari S01) lewat Menu 6 |
-| Input | Asal: S01, Tujuan: B06 |
-| Fitur | Menu 6 sub-menu 4 |
-| Ekspektasi | "Tidak ada rute yang tersedia dengan kondisi simulasi saat ini." |
-| Penanganan | BFS melewati edge dengan `aktif = false`. Karena tidak ada tetangga yang bisa dijangkau dari S01, queue akan kosong tanpa menemukan tujuan. |
 
 ---
+**Fitur 7**
 
-**Edge Case 4: Prefix tidak cocok dengan nama manapun di Trie**
-
-| Atribut | Detail |
-|---|---|
-| Input | Prefix: "xyz" |
-| Fitur | Menu 1 atau Menu 7 |
-| Ekspektasi | "Data tidak ditemukan." |
-| Penanganan | `searchByPrefix` mengembalikan list kosong saat traversal karakter pertama menghasilkan `null` di children root. |
-
----
-
-**Edge Case 5: ID node tidak terdaftar di dataset**
-
-| Atribut | Detail |
-|---|---|
-| Input | Asal: "ZZZ", Tujuan: S01 |
-| Fitur | Menu 2, 3, 4 |
-| Ekspektasi | Menu 4: "ERROR: ID 'ZZZ' tidak ditemukan." Menu 2/3: "Rute tidak ditemukan." |
-| Penanganan | `MinTransitFinder` dan `Djikstra.cari` keduanya memanggil `graph.containsNode()` sebelum menjalankan algoritma. |
-
----
-
-**Edge Case 6: Graf terfragmentasi, tidak ada jalur antar dua node**
-
-| Atribut | Detail |
-|---|---|
-| Kondisi | Terjadi jika semua edge penghubung antara dua komponen dinonaktifkan via simulasi |
-| Input | Asal: S07, Tujuan: B15 (tidak ada jalur langsung di dataset) |
-| Ekspektasi | BFS mengembalikan `ditemukan = false`, program mencetak pesan tidak ada rute |
-| Penanganan | BFS mengosongkan queue tanpa mencapai tujuan, lalu mengembalikan `HasilBFS` dengan `ditemukan = false`. |
+<img width="708" height="990" alt="image" src="https://github.com/user-attachments/assets/1843ef60-f06c-481f-8d8b-35948434ed0a" />
 
 ---
 
 ## 10. Analisis Kompleksitas
 
-| Operasi | Kompleksitas Waktu | Kompleksitas Ruang | Keterangan |
-|---|---|---|---|
-| Trie.insert | O(L) | O(L) | L = panjang nama halte yang diinsert |
-| Trie.searchByPrefix | O(L + R) | O(R) | R = jumlah node hasil yang dikembalikan |
-| MinHeap.insert | O(log N) | O(1) | N = jumlah elemen di heap saat itu |
-| MinHeap.extractMin | O(log N) | O(1) | Down-heapify maksimal sedalam log N |
-| BFS.cariMinimumTransit | O(V + E) | O(V x P) | P = panjang path rata-rata yang disimpan di queue |
-| Dijkstra.cari | O((V + E) log V) | O(V) | Menggunakan PriorityQueue Java |
-| Graph.addNode | O(1) amortized | O(1) | HashMap put |
-| Graph.getNeighbors | O(1) | O(1) | HashMap get |
-
-Catatan tentang kompleksitas ruang BFS: implementasi ini menyimpan seluruh path di setiap elemen queue, bukan hanya ID node terakhir. Hal ini membuat kompleksitas ruang menjadi O(V x P) di mana P adalah panjang path rata-rata. Pendekatan alternatif yang lebih efisien adalah menyimpan peta `parent[]` seperti yang dilakukan Dijkstra, namun untuk dataset ini dengan 30 node dan 65 edge, perbedaannya tidak signifikan.
+| Fitur / Operasi | Kompleksitas Waktu | Kompleksitas Ruang | Penjelasan |
+| :--- | :--- | :--- | :--- |
+| **Trie - Insert** | O(L) | O(L) | **L** adalah panjang karakter nama halte/stasiun. Operasi pembuatan *node* berjalan sekuensial sesuai jumlah huruf. |
+| **Trie - Search** | O(L + R) | O(R) | **L** adalah panjang *prefix* input, dan **R** adalah total node dari semua cabang subtree yang dikumpulkan secara rekursif saat memuat hasil *auto-complete*. |
+| **MinHeap - Insert / Extract** | O(log N) | O(1) | **N** adalah jumlah elemen dalam *heap*. Proses *up-heapify* maupun *down-heapify* berjalan membelah *tree* secara logaritmik tanpa memakan memori tambahan. |
+| **BFS (Minimum Transit)** | O(V + E) | O(V × P) | **V** = jumlah *vertex*, **E** = jumlah *edge*. Kompleksitas ruang memakan memori lebih besar karena algoritma ini menduplikasi dan menyimpan seluruh rekam jejak jalur (`List<String>`) di dalam antrean (`Queue`), di mana **P** adalah panjang rata-rata rute. |
+| **Dijkstra (Tercepat/Termurah)**| O((V + E) log V)| O(V) | Mengeksplorasi graf menggunakan *Priority Queue* berbasis bobot. Pemakaian ruang jauh lebih efisien dari BFS (hanya O(V)) karena program hanya memetakan *pointer* *node* pada `HashMap` `sebelum` dan murni melakukan *backtracking* saat tujuan tercapai. |
+| **Graph - Add Node / Edge** | O(1) *amortized* | O(1) | Penambahan data pada *Adjacency List* menggunakan fungsi bawaan `HashMap.put()` dan `List.add()` yang dieksekusi secara instan. |
 
 ---
 
-## 11. Batasan dan Catatan
 
-* **Format Antarmuka:** Program dibangun sepenuhnya dengan *Command Line Interface* (CLI) dan tidak menyediakan *Graphical User Interface* (GUI).
-* **Path Data:** Sistem membaca file CSV secara relatif dari direktori `src/` (`../../../data/`). Jika program dijalankan dari lokasi berbeda, alokasi direktori pada `App.java` memerlukan penyesuaian ulang.
-* **Implementasi Algoritma:** Struktur `MinHeap` kustom pada `model/MinHeap.java` difungsikan khusus untuk demonstrasi dan *unit testing*. Algoritma utama pada `Djikstra.java` menggunakan struktur `PriorityQueue` bawaan Java.
-* **Simulasi Rute:** Modifikasi *edge* pada fitur simulasi bersifat temporer (mengubah *flag* `aktif = false`) tanpa menghapus objek secara fisik. Kondisi graf akan dinormalkan sepenuhnya saat keluar dari menu.
-* **Validasi Masukan:** Sistem validasi *error* pada antarmuka CLI bersifat mendasar. Kesalahan pengetikan (misal: memasukkan karakter huruf saat instruksi meminta angka) akan menyebabkan *exception* `NumberFormatException`.
-* **Skala Dataset:** Himpunan graf (30 node dan 65 *edge*) dibangun secara khusus untuk mengakomodir keperluan akademik dan validasi algoritma. Dataset ini tidak merepresentasikan infrastruktur transportasi Kota Surabaya secara nyata dan menyeluruh.
-```
+## 11. What if analysis
+
+1. **What if pengguna mencari rute ke halte yang berstatus "Nonaktif" (misal Halte Sidosermo - B16)?**
+   * **Hasil:** Sistem langsung mengembalikan pesan peringatan "Rute tidak ditemukan."
+   * **Analisis:** Karena logika `Graph.addEdge()` secara otomatis memblokir pembuatan *edge* jika asal atau tujuannya berstatus "Nonaktif", maka node tersebut memiliki *in-degree* murni nol. Algoritma `BFS` dan `Dijkstra` akan memproses penelusuran graf namun tidak akan pernah bisa mencapai node tujuan tersebut, sehingga terhindar dari *infinite loop*.
+2. **What if beberapa rute dimatikan pada menu "Simulasi Rute Tidak Tersedia" sehingga jaringan graf terputus (terfragmentasi)?**
+   * **Hasil:** Program mengembalikan output pencarian `ditemukan = false` dan memunculkan pesan "Tidak ada rute yang tersedia dengan kondisi simulasi saat ini."
+   * **Analisis:** Pada setiap iterasi pengecekan tetangga, algoritma menerapkan *guard clause* `if (!edge.isAktif()) continue;`. Jika semua akses rute diputus, elemen di dalam struktur data `Queue` (pada BFS) atau `PriorityQueue` (pada Dijkstra) akan terus di-*poll* hingga kosong sepenuhnya tanpa pernah menyentuh kondisi *break* pada node tujuan. Program menangani antrean kosong ini dengan aman.
+3. **What if pengguna mengetikkan nama stasiun asal/tujuan yang *typo* pada fitur pencarian (PrefixSearcher)?**
+   * **Hasil:** Program seketika memunculkan notifikasi "Data tidak ditemukan."
+   * **Analisis:** Implementasi `Trie` melakukan *lookup* dari level *root* ke bawah. Apabila ditemukan karakter salah yang tidak terdapat pada variabel `children`, pemanggilan `current.children.get(ch)` akan menghasilkan `null`. Program menangkap kondisi ini dan langsung me-*return* *list* kosong tanpa mengeksekusi rekursi berlebihan yang bisa memicu *NullPointerException*.
+4. **What if pengguna memasukkan ID stasiun asal dan tujuan yang sama persis (misal asal: S01, tujuan: S01)?**
+   * **Hasil:** Program akan langsung menampilkan stasiun tersebut sebagai *output* dengan keterangan bobot: 0 transit, 0 menit waktu, dan 0 rupiah biaya.
+   * **Analisis:** Pada algoritma BFS, *Queue* diinisialisasi dengan asal (S01). Pada iterasi pertama, program langsung mendeteksi `sekarang == tujuan`, dan algoritma seketika berhenti. Ini membuktikan fungsionalitas penghentian dini (*early exit*) berjalan dengan baik tanpa perlu mengekspansi graf lebih lanjut.
+
+---
+
+## 12. Kesimpulan
+
+Secara keseluruhan, proyek "Public Transport Planner" ini telah berhasil memodelkan simulasi jaringan transportasi umum secara efisien. Penggunaan struktur **Adjacency List** terbukti sangat ideal untuk merepresentasikan *sparse graph* jaringan kota, secara masif menghemat alokasi memori jika dibandingkan dengan *Adjacency Matrix* konvensional. Pada antarmuka interaksi, integrasi struktur data **Trie** sukses menyediakan fungsionalitas *auto-complete* yang secara drastis memangkas beban komputasi *string lookup*.
+
+Sebagai inti penyelesaian masalah, program ini membedah pencarian rute melalui dua pendekatan algoritma utama: **Breadth-First Search (BFS)** yang beroperasi untuk memetakan *minimum transit* pada *unweighted graph*, serta algoritma **Dijkstra** yang memanfaatkan *Priority Queue* pada *weighted graph* untuk mengkalkulasi *shortest path* berdasarkan kriteria waktu dan biaya. Lebih jauh, arsitektur kode telah didesain dengan *robustness* yang tinggi; program mampu melakukan *early exit* saat input asal dan tujuan identik, menangani rute buntu, hingga beradaptasi dengan *fragmented graph* pada fitur simulasi pemutusan rute. Pada akhirnya, proyek ini tidak hanya mengimplementasikan teori dasar struktur data secara presisi, tetapi juga merangkainya menjadi *software* berbasis *Command Line Interface* (CLI) yang terintegrasi, interaktif, dan optimal.
